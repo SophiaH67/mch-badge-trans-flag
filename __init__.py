@@ -6,6 +6,11 @@ import nvs
 import buttons
 import mch22
 
+
+class State:
+    night_mode = False
+
+
 # Pin 19 controls the power supply to SD card and neopixels
 powerPin = Pin(19, Pin.OUT)
 
@@ -24,7 +29,22 @@ def on_home_button(pressed):
         mch22.exit_python()
 
 
+def on_a_button(pressed):
+    if pressed:
+        State.night_mode = not State.night_mode
+
+        if State.night_mode:
+            powerPin.off()
+            # Draw a black rectangle over the screen
+            display.drawRect(0, 0, display.width(), display.height(), True, 0x000000)
+            display.flush()
+        else:
+            powerPin.on()
+            draw_trans_flag()
+
+
 buttons.attach(buttons.BTN_HOME, on_home_button)
+buttons.attach(buttons.BTN_A, on_a_button)
 
 blue_hex = 0x5BCEFA
 pink_hex = 0xF5A9B8
@@ -62,19 +82,27 @@ def cycle_neopixels():
     np.write()
 
 
-# Main display
-for i in range(5):
-    color = (
-        blue_hex if i == 0 or i == 4 else pink_hex if i == 1 or i == 3 else white_hex
-    )
+def draw_trans_flag():
+    # Main display
+    for i in range(5):
+        color = (
+            blue_hex
+            if i == 0 or i == 4
+            else pink_hex
+            if i == 1 or i == 3
+            else white_hex
+        )
 
-    y_offset = display_height // 5 * i
+        y_offset = display_height // 5 * i
 
-    display.drawRect(0, y_offset, display_width, display_height // 5, True, color)
+        display.drawRect(0, y_offset, display_width, display_height // 5, True, color)
 
-display.flush()
+    display.flush()
+
 
 # Main loop
+draw_trans_flag()
+
 while True:
     cycle_neopixels()
-    time.sleep(5)
+    time.sleep(1)
